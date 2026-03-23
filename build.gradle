@@ -27,6 +27,10 @@ sourceSets.main.resources {
 }
 
 repositories {
+    maven {
+        name = "ModMaven"
+        url = "https://modmaven.dev/"
+    }
     // Add here additional repositories if required by some of the dependencies below.
 }
 
@@ -41,10 +45,7 @@ neoForge {
     // Specify the version of NeoForge to use.
     version = project.neo_version
 
-    parchment {
-        mappingsVersion = project.parchment_mappings_version
-        minecraftVersion = project.parchment_minecraft_version
-    }
+    parchment {}
 
     // This line is optional. Access Transformers are automatically detected
     // accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
@@ -118,6 +119,8 @@ configurations {
 }
 
 dependencies {
+    implementation "mekanism:Mekanism:${minecraft_version}-10.7.14.79"
+    implementation "mekanism:Mekanism:${minecraft_version}-10.7.14.79:generators"
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
