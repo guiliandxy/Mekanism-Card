@@ -25,6 +25,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -33,15 +34,19 @@ import java.util.List;
 public class MassUpgradeConfigurator extends Item {
 
     public enum Mode {
-        INSTALL("安装模式", ChatFormatting.GREEN),
-        REMOVE("移除模式", ChatFormatting.RED);
+        INSTALL("mekanism_card.mode.install", ChatFormatting.GREEN),
+        REMOVE("mekanism_card.mode.remove", ChatFormatting.RED);
 
-        public final String displayName;
+        public final String translationKey;
         public final ChatFormatting color;
 
-        Mode(String displayName, ChatFormatting color) {
-            this.displayName = displayName;
+        Mode(String translationKey, ChatFormatting color) {
+            this.translationKey = translationKey;
             this.color = color;
+        }
+
+        public Component getDisplayName() {
+            return Component.translatable(translationKey);
         }
     }
 
@@ -52,6 +57,7 @@ public class MassUpgradeConfigurator extends Item {
         super(new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON));
     }
 
+    // 空气右键：切换安装/移除模式（非潜行）或切换选区模式（潜行）
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
@@ -65,6 +71,7 @@ public class MassUpgradeConfigurator extends Item {
         return InteractionResultHolder.success(stack);
     }
 
+    // 对方块右键：实际处理逻辑已移到事件监听中，这里只返回 CONSUME 避免原版 GUI
     @Override
     public InteractionResult useOn(UseOnContext context) {
         return InteractionResult.CONSUME;
@@ -74,21 +81,23 @@ public class MassUpgradeConfigurator extends Item {
     public void handleRadiusMode(Level level, BlockPos pos, Player player) {
         TileComponentUpgrade exampleComp = getUpgradeComponent(level, pos);
         if (exampleComp == null) {
-            player.displayClientMessage(Component.literal("目标方块不是可升级的机器！")
+            player.displayClientMessage(Component.translatable("message.mekanism_card.not_upgradable")
                     .withStyle(ChatFormatting.RED), true);
             return;
         }
 
         Upgrade upgradeType = getSelectedUpgradeFromInventory(player);
         if (upgradeType == null) {
-            player.displayClientMessage(Component.literal("背包中没有可用的升级模块！")
+            player.displayClientMessage(Component.translatable("message.mekanism_card.no_upgrade_in_inventory")
                     .withStyle(ChatFormatting.RED), true);
             return;
         }
 
-        List<BlockPos> machines = findNearbyMachines(level, pos, DEFAULT_RADIUS);
+        net.minecraft.world.level.block.Block clickedBlock = level.getBlockState(pos).getBlock();
+        List<BlockPos> machines = findConnectedMachines(level, pos, clickedBlock);
+
         if (machines.isEmpty()) {
-            player.displayClientMessage(Component.literal("半径 " + DEFAULT_RADIUS + " 格内没有其他可升级机器")
+            player.displayClientMessage(Component.translatable("message.mekanism_card.no_machines_connected")
                     .withStyle(ChatFormatting.YELLOW), true);
             return;
         }
@@ -109,17 +118,109 @@ public class MassUpgradeConfigurator extends Item {
     }
 
     public void handleSelectionModeSetPoint(Level level, BlockPos pos, Player player, ItemStack stack) {
+        if (getUpgradeComponent(level, pos) == null) {
+            player.displayClientMessage(Component.translatable("message.mekanism_card.selection_must_be_mekanism")
+                    .withStyle(ChatFormatting.RED), true);
+            return;
+        }
         setSelectionPoint(stack, pos, player);
     }
+
+    private static final int SELECTION_CLEAR_DISTANCE = 5;
 
     public void handleSelectionModeExecute(Level level, BlockPos pos, Player player, ItemStack stack) {
         BlockPos[] selection = getSelection(stack);
         if (selection[0] == null || selection[1] == null) {
-            player.displayClientMessage(Component.literal("选区未完成，请先蹲下右键设置两个角点")
+            player.displayClientMessage(Component.translatable("message.mekanism_card.selection_incomplete")
                     .withStyle(ChatFormatting.RED), true);
             return;
         }
+
+        if (!isPosInSelection(pos, selection)) {
+            player.displayClientMessage(Component.translatable("message.mekanism_card.selection_outside")
+                    .withStyle(ChatFormatting.RED), true);
+            return;
+        }
+
+        TileComponentUpgrade clickedComp = getUpgradeComponent(level, pos);
+        if (clickedComp == null) {
+            player.displayClientMessage(Component.translatable("message.mekanism_card.not_upgradable")
+                    .withStyle(ChatFormatting.RED), true);
+            return;
+        }
+
         performBatchOperation(level, selection[0], selection[1], player);
+    }
+
+    public boolean checkAndClearSelectionIfTooFar(Level level, Player player, ItemStack stack) {
+        BlockPos[] selection = getSelection(stack);
+        if (selection[0] == null || selection[1] == null) {
+            return false;
+        }
+
+        BlockPos playerPos = player.getOnPos();
+        int minX = Math.min(selection[0].getX(), selection[1].getX()) - SELECTION_CLEAR_DISTANCE;
+        int maxX = Math.max(selection[0].getX(), selection[1].getX()) + SELECTION_CLEAR_DISTANCE;
+        int minY = Math.min(selection[0].getY(), selection[1].getY()) - SELECTION_CLEAR_DISTANCE;
+        int maxY = Math.max(selection[0].getY(), selection[1].getY()) + SELECTION_CLEAR_DISTANCE;
+        int minZ = Math.min(selection[0].getZ(), selection[1].getZ()) - SELECTION_CLEAR_DISTANCE;
+        int maxZ = Math.max(selection[0].getZ(), selection[1].getZ()) + SELECTION_CLEAR_DISTANCE;
+
+        if (playerPos.getX() < minX || playerPos.getX() > maxX ||
+            playerPos.getY() < minY || playerPos.getY() > maxY ||
+            playerPos.getZ() < minZ || playerPos.getZ() > maxZ) {
+            clearSelection(stack);
+            player.displayClientMessage(Component.translatable("message.mekanism_card.selection_cleared")
+                    .withStyle(ChatFormatting.YELLOW), true);
+            return true;
+        }
+        return false;
+    }
+
+    private void clearSelection(ItemStack stack) {
+        CustomData data = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
+        CompoundTag tag = data.copyTag();
+        tag.remove("Pos1");
+        tag.remove("Pos2");
+        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+        stack.remove(DataComponents.ENCHANTMENT_GLINT_OVERRIDE);
+    }
+
+    private boolean isPosInSelection(BlockPos pos, BlockPos[] selection) {
+        int minX = Math.min(selection[0].getX(), selection[1].getX());
+        int maxX = Math.max(selection[0].getX(), selection[1].getX());
+        int minY = Math.min(selection[0].getY(), selection[1].getY());
+        int maxY = Math.max(selection[0].getY(), selection[1].getY());
+        int minZ = Math.min(selection[0].getZ(), selection[1].getZ());
+        int maxZ = Math.max(selection[0].getZ(), selection[1].getZ());
+
+        return pos.getX() >= minX && pos.getX() <= maxX &&
+               pos.getY() >= minY && pos.getY() <= maxY &&
+               pos.getZ() >= minZ && pos.getZ() <= maxZ;
+    }
+
+    private void performSingleOperation(Level level, BlockPos pos, Player player) {
+        Upgrade upgradeType = getSelectedUpgradeFromInventory(player);
+        if (upgradeType == null) {
+            player.displayClientMessage(Component.translatable("message.mekanism_card.no_upgrade_in_inventory")
+                    .withStyle(ChatFormatting.RED), true);
+            return;
+        }
+
+        TileComponentUpgrade comp = getUpgradeComponent(level, pos);
+        if (comp == null) {
+            player.displayClientMessage(Component.translatable("message.mekanism_card.not_upgradable")
+                    .withStyle(ChatFormatting.RED), true);
+            return;
+        }
+
+        int amount = processUpgrade(comp, upgradeType, player, currentMode);
+        if (amount > 0) {
+            feedbackDetailed(player, upgradeType, currentMode, 1, amount);
+        } else {
+            player.displayClientMessage(Component.translatable("message.mekanism_card.operation.none")
+                    .withStyle(ChatFormatting.RED), true);
+        }
     }
 
     public boolean isSelectionModeActive(ItemStack stack) {
@@ -149,8 +250,8 @@ public class MassUpgradeConfigurator extends Item {
     // ================== 内部辅助方法 ==================
     private void toggleMode(Player player) {
         currentMode = (currentMode == Mode.INSTALL) ? Mode.REMOVE : Mode.INSTALL;
-        player.displayClientMessage(Component.literal("切换至: " + currentMode.displayName)
-                .withStyle(currentMode.color), true);
+        player.displayClientMessage(Component.translatable("message.mekanism_card.mode_switched",
+                currentMode.getDisplayName()).withStyle(currentMode.color), true);
     }
 
     private void toggleSelectionMode(ItemStack stack, Player player) {
@@ -164,11 +265,19 @@ public class MassUpgradeConfigurator extends Item {
         }
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
 
-        player.displayClientMessage(Component.literal(newMode ? "已开启选区模式" : "已关闭选区模式")
-                .withStyle(newMode ? ChatFormatting.GREEN : ChatFormatting.RED), true);
+        if (!newMode) {
+            stack.remove(DataComponents.ENCHANTMENT_GLINT_OVERRIDE);
+        }
+
+        player.displayClientMessage(Component.translatable(newMode ? "message.mekanism_card.selection_mode.enabled" : "message.mekanism_card.selection_mode.disabled")
+                .withStyle(newMode ? ChatFormatting.GREEN : ChatFormatting.RED), false);
         if (newMode) {
-            player.displayClientMessage(Component.literal("蹲下右键方块设置第一个角点，再蹲下右键第二个角点，普通右键执行选区操作")
-                    .withStyle(ChatFormatting.GRAY), true);
+            player.displayClientMessage(Component.translatable("message.mekanism_card.selection_mode.help.first")
+                    .withStyle(ChatFormatting.GRAY), false);
+            player.displayClientMessage(Component.translatable("message.mekanism_card.selection_mode.help.second")
+                    .withStyle(ChatFormatting.GRAY), false);
+            player.displayClientMessage(Component.translatable("message.mekanism_card.selection_mode.help.execute")
+                    .withStyle(ChatFormatting.GRAY), false);
         }
     }
 
@@ -179,24 +288,27 @@ public class MassUpgradeConfigurator extends Item {
         if (!tag.contains("Pos1")) {
             tag.put("Pos1", newCompound(pos));
             stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
-            player.displayClientMessage(Component.literal("已设置第一个角点: " + pos.toShortString())
+            player.displayClientMessage(Component.translatable("message.mekanism_card.selection_point.first", pos.toShortString())
                     .withStyle(ChatFormatting.GREEN), true);
         } else if (!tag.contains("Pos2")) {
             tag.put("Pos2", newCompound(pos));
             stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
-            player.displayClientMessage(Component.literal("已设置第二个角点: " + pos.toShortString())
+            stack.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+            player.displayClientMessage(Component.translatable("message.mekanism_card.selection_point.second", pos.toShortString())
                     .withStyle(ChatFormatting.GREEN), true);
             BlockPos p1 = getPosFromTag(tag, "Pos1");
             BlockPos p2 = pos;
             int dx = Math.abs(p1.getX() - p2.getX()) + 1;
             int dy = Math.abs(p1.getY() - p2.getY()) + 1;
             int dz = Math.abs(p1.getZ() - p2.getZ()) + 1;
-            player.displayClientMessage(Component.literal("选区大小: " + dx + " x " + dy + " x " + dz + "，共 " + (dx * dy * dz) + " 个方块")
+            player.displayClientMessage(Component.translatable("message.mekanism_card.selection_area.size", dx, dy, dz, dx * dy * dz)
                     .withStyle(ChatFormatting.GRAY), true);
         } else {
+            // 已存在两个点，重置并重新设置第一个点
             tag.remove("Pos1");
             tag.remove("Pos2");
             stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+            stack.remove(DataComponents.ENCHANTMENT_GLINT_OVERRIDE);
             setSelectionPoint(stack, pos, player);
         }
     }
@@ -237,7 +349,7 @@ public class MassUpgradeConfigurator extends Item {
 
         Upgrade upgradeType = getSelectedUpgradeFromInventory(player);
         if (upgradeType == null) {
-            player.displayClientMessage(Component.literal("背包中没有可用的升级模块！")
+            player.displayClientMessage(Component.translatable("message.mekanism_card.no_upgrade_in_inventory")
                     .withStyle(ChatFormatting.RED), true);
             return;
         }
@@ -264,28 +376,21 @@ public class MassUpgradeConfigurator extends Item {
 
     private void feedbackDetailed(Player player, Upgrade upgradeType, Mode mode, int affectedMachines, int totalAmount) {
         if (totalAmount > 0) {
-            Component upgradeName = Component.translatable(upgradeType.getTranslationKey());
-            String action = mode == Mode.INSTALL ? "添加 " : "移除 ";
-            player.displayClientMessage(
-                    Component.literal("已" + action)
-                            .append(upgradeName)
-                            .append(Component.literal(" 升级 x" + totalAmount +
-                                    "，影响 " + affectedMachines + " 台机器"))
-                            .withStyle(ChatFormatting.GREEN),
-                    true
-            );
+            String actionKey = mode == Mode.INSTALL ? "message.mekanism_card.operation.install" : "message.mekanism_card.operation.remove";
+            player.displayClientMessage(Component.translatable(actionKey,
+                            Component.translatable(upgradeType.getTranslationKey()),
+                            totalAmount,
+                            affectedMachines)
+                    .withStyle(ChatFormatting.GREEN), true);
         } else {
-            player.displayClientMessage(
-                    Component.literal("没有发生任何变化")
-                            .withStyle(ChatFormatting.RED),
-                    true
-            );
+            player.displayClientMessage(Component.translatable("message.mekanism_card.operation.none")
+                    .withStyle(ChatFormatting.RED), true);
         }
     }
 
     /**
      * 处理单个机器的升级操作
-     * @return 实际安装或移除的数量（安装可能>1，移除返回移除的数量）
+     * @return 实际安装或移除的数量（安装可能>1，移除时为当前安装数量）
      */
     private int processUpgrade(TileComponentUpgrade comp, Upgrade upgradeType, Player player, Mode mode) {
         int current = comp.getUpgrades(upgradeType);
@@ -303,12 +408,11 @@ public class MassUpgradeConfigurator extends Item {
             return added;
         } else { // REMOVE
             if (current <= 0) return 0;
-            // 一次性移除所有该类型升级
+            // 移除所有该类型升级
             comp.removeUpgrade(upgradeType, true);
-            // 将输出槽中的物品转移给玩家
+            // 返还物品已在 removeUpgrade 内部处理（放入输出槽），需要将其从输出槽转移到玩家背包
             handleRemovedUpgrade(comp, player);
-            // 返回移除的数量（即之前的数量）
-            return current;
+            return current; // 返回移除的数量
         }
     }
 
@@ -367,22 +471,60 @@ public class MassUpgradeConfigurator extends Item {
             case CHEMICAL -> MekanismItems.CHEMICAL_UPGRADE.get();
             case ANCHOR -> MekanismItems.ANCHOR_UPGRADE.get();
             case STONE_GENERATOR -> MekanismItems.STONE_GENERATOR_UPGRADE.get();
-            default -> throw new IllegalArgumentException("不支持的升级类型: " + upgrade);
+            default -> throw new IllegalArgumentException("Unsupported upgrade type: " + upgrade);
         };
     }
 
     private List<BlockPos> findNearbyMachines(Level level, BlockPos center, int radius) {
         List<BlockPos> machines = new ArrayList<>();
-        for (int x = -radius; x <= radius; x++) {
-            for (int y = -radius; y <= radius; y++) {
-                for (int z = -radius; z <= radius; z++) {
-                    BlockPos pos = center.offset(x, y, z);
-                    if (getUpgradeComponent(level, pos) != null) {
-                        machines.add(pos);
+        if (radius == 1) {
+            for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
+                BlockPos pos = center.relative(dir);
+                if (getUpgradeComponent(level, pos) != null) {
+                    machines.add(pos);
+                }
+            }
+        } else {
+            for (int x = -radius; x <= radius; x++) {
+                for (int y = -radius; y <= radius; y++) {
+                    for (int z = -radius; z <= radius; z++) {
+                        BlockPos pos = center.offset(x, y, z);
+                        if (getUpgradeComponent(level, pos) != null) {
+                            machines.add(pos);
+                        }
                     }
                 }
             }
         }
+        return machines;
+    }
+
+    private List<BlockPos> findConnectedMachines(Level level, BlockPos start, net.minecraft.world.level.block.Block targetBlock) {
+        List<BlockPos> machines = new ArrayList<>();
+        java.util.Set<BlockPos> visited = new java.util.HashSet<>();
+        java.util.Queue<BlockPos> queue = new java.util.ArrayDeque<>();
+
+        queue.add(start);
+        visited.add(start);
+
+        while (!queue.isEmpty()) {
+            BlockPos current = queue.poll();
+            if (getUpgradeComponent(level, current) != null) {
+                machines.add(current);
+            }
+
+            for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
+                BlockPos neighbor = current.relative(dir);
+                if (!visited.contains(neighbor)) {
+                    net.minecraft.world.level.block.Block neighborBlock = level.getBlockState(neighbor).getBlock();
+                    if (neighborBlock == targetBlock && getUpgradeComponent(level, neighbor) != null) {
+                        visited.add(neighbor);
+                        queue.add(neighbor);
+                    }
+                }
+            }
+        }
+
         return machines;
     }
 
@@ -396,44 +538,47 @@ public class MassUpgradeConfigurator extends Item {
         }
 
         if (upgrade != null) {
-            tooltip.add(Component.translatable(upgrade.getTranslationKey())
-                    .withStyle(ChatFormatting.AQUA)
-                    .append(Component.literal(" 升级 (当前选择)")));
+            tooltip.add(Component.translatable("tooltip.mekanism_card.current_upgrade", Component.translatable(upgrade.getTranslationKey()))
+                    .withStyle(ChatFormatting.AQUA));
         } else {
-            tooltip.add(Component.literal("当前升级类型: 未选择")
+            tooltip.add(Component.translatable("tooltip.mekanism_card.no_upgrade")
                     .withStyle(ChatFormatting.RED));
         }
 
-        tooltip.add(Component.literal("空气右键：切换安装/移除模式")
+        tooltip.add(Component.translatable("tooltip.mekanism_card.air_click_switch_mode")
                 .withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.literal("潜行+空气右键：切换选区模式")
+        tooltip.add(Component.translatable("tooltip.mekanism_card.sneak_air_click_switch_selection")
                 .withStyle(ChatFormatting.DARK_GREEN));
+
         boolean selectionMode = isSelectionModeActive(stack);
-        tooltip.add(Component.literal("当前模式: " + (selectionMode ? "选区模式" : "半径模式") + " | " + currentMode.displayName)
+        String modeKey = selectionMode ? "tooltip.mekanism_card.mode.selection" : "tooltip.mekanism_card.mode.radius";
+        tooltip.add(Component.translatable("tooltip.mekanism_card.current_mode",
+                        Component.translatable(modeKey),
+                        currentMode.getDisplayName())
                 .withStyle(selectionMode ? ChatFormatting.AQUA : ChatFormatting.GOLD));
 
         if (selectionMode) {
             BlockPos[] sel = getSelection(stack);
             if (sel[0] != null && sel[1] != null) {
-                tooltip.add(Component.literal("选区: " + sel[0].toShortString() + " → " + sel[1].toShortString())
+                tooltip.add(Component.translatable("tooltip.mekanism_card.selection.range", sel[0].toShortString(), sel[1].toShortString())
                         .withStyle(ChatFormatting.GRAY));
-                tooltip.add(Component.literal("选区已设置，游戏中会显示彩色边框")
+                tooltip.add(Component.translatable("tooltip.mekanism_card.selection.visible")
                         .withStyle(ChatFormatting.GRAY));
             } else if (sel[0] != null) {
-                tooltip.add(Component.literal("选区: 已设置第一个角点，等待第二个角点")
+                tooltip.add(Component.translatable("tooltip.mekanism_card.selection.first_only")
                         .withStyle(ChatFormatting.GRAY));
             } else {
-                tooltip.add(Component.literal("选区: 未设置，蹲下右键方块设置")
+                tooltip.add(Component.translatable("tooltip.mekanism_card.selection.none")
                         .withStyle(ChatFormatting.GRAY));
             }
-            tooltip.add(Component.literal("普通右键机器：对选区执行批量操作")
+            tooltip.add(Component.translatable("tooltip.mekanism_card.selection.execute")
                     .withStyle(ChatFormatting.GRAY));
-            tooltip.add(Component.literal("蹲下右键方块：设置选区角点")
+            tooltip.add(Component.translatable("tooltip.mekanism_card.selection.set_point")
                     .withStyle(ChatFormatting.GRAY));
         } else {
-            tooltip.add(Component.literal("蹲下右键机器：对半径 " + DEFAULT_RADIUS + " 格内机器批量操作")
+            tooltip.add(Component.translatable("tooltip.mekanism_card.radius.execute", DEFAULT_RADIUS)
                     .withStyle(ChatFormatting.GRAY));
-            tooltip.add(Component.literal("普通右键机器：无操作")
+            tooltip.add(Component.translatable("tooltip.mekanism_card.radius.no_op")
                     .withStyle(ChatFormatting.GRAY));
         }
         super.appendHoverText(stack, context, tooltip, flag);

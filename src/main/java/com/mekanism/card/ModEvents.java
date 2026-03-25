@@ -1,13 +1,16 @@
 package com.mekanism.card;
 
 import com.mekanism.card.item.MassUpgradeConfigurator;
-import net.minecraft.world.InteractionHand;
+import com.mekanism.card.item.MemoryCard;
+import mekanism.common.tile.base.TileEntityMekanism;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
-import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
 
 @EventBusSubscriber(modid = MekanismCard.MOD_ID)
@@ -17,6 +20,26 @@ public class ModEvents {
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         Player player = event.getEntity();
         ItemStack stack = event.getItemStack();
+
+        if (stack.getItem() instanceof MemoryCard) {
+            if (event.getLevel().isClientSide) {
+                return;
+            }
+
+            BlockPos pos = event.getPos();
+            if (!(event.getLevel().getBlockEntity(pos) instanceof TileEntityMekanism)) {
+                return;
+            }
+
+            if (player.isShiftKeyDown()) {
+                MemoryCard.handleCopyStatic(event.getLevel(), pos, player, stack);
+            } else {
+                MemoryCard.handlePasteStatic(event.getLevel(), pos, player, stack);
+            }
+            event.setCanceled(true);
+            return;
+        }
+
         if (!(stack.getItem() instanceof MassUpgradeConfigurator configurator)) {
             return;
         }
@@ -26,10 +49,16 @@ public class ModEvents {
             return;
         }
 
+        // 显示当前模式信息
+        displayModeInfo(player, configurator, stack);
+
         boolean selectionMode = configurator.isSelectionModeActive(stack);
 
         // 根据模式和按键执行对应操作
         if (selectionMode) {
+            // 检测距离并可能清除选区
+            configurator.checkAndClearSelectionIfTooFar(event.getLevel(), player, stack);
+
             if (player.isShiftKeyDown()) {
                 // 设置角点
                 configurator.handleSelectionModeSetPoint(event.getLevel(), event.getPos(), player, stack);
@@ -49,5 +78,14 @@ public class ModEvents {
                 event.setCanceled(true);
             }
         }
+    }
+
+    private static void displayModeInfo(Player player, MassUpgradeConfigurator configurator, ItemStack stack) {
+        boolean selectionMode = configurator.isSelectionModeActive(stack);
+        String modeKey = selectionMode ? "tooltip.mekanism_card.mode.selection" : "tooltip.mekanism_card.mode.radius";
+        player.displayClientMessage(Component.translatable("tooltip.mekanism_card.current_mode",
+                        Component.translatable(modeKey),
+                        configurator.getCurrentMode().getDisplayName())
+                .withStyle(selectionMode ? ChatFormatting.AQUA : ChatFormatting.GOLD), true);
     }
 }

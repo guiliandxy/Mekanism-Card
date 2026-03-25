@@ -18,6 +18,7 @@ import net.minecraft.world.phys.AABB;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RenderHandEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.joml.Matrix4f;
 
@@ -30,6 +31,46 @@ public final class ClientEvents {
     private static final int MAX_RENDER = 500;
 
     private ClientEvents() {}
+
+    @SubscribeEvent
+    public static void onRenderHand(RenderHandEvent event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+
+        ItemStack mainHand = mc.player.getMainHandItem();
+        if (mainHand.getItem() instanceof MassUpgradeConfigurator configurator) {
+            if (configurator.isSelectionModeActive(mainHand)) {
+                float pulse = (float) (Math.sin(System.currentTimeMillis() * 0.005) * 0.3f + 0.7f);
+                RenderSystem.enableBlend();
+                RenderSystem.defaultBlendFunc();
+                RenderSystem.depthMask(false);
+                RenderSystem.setShader(GameRenderer::getPositionColorShader);
+
+                float r = 0.0f, g = 1.0f, b = 1.0f;
+                Matrix4f matrix = event.getPoseStack().last().pose();
+                Tesselator t = Tesselator.getInstance();
+                BufferBuilder buf = t.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+
+                float size = 0.5f;
+                float thickness = 0.02f;
+                float z = 0.01f;
+
+                buf.addVertex(matrix, -thickness, -thickness, z).setColor(r, g, b, 0.6f * pulse);
+                buf.addVertex(matrix, size + thickness, -thickness, z).setColor(r, g, b, 0.6f * pulse);
+                buf.addVertex(matrix, size + thickness, size + thickness, z).setColor(r, g, b, 0.6f * pulse);
+                buf.addVertex(matrix, -thickness, size + thickness, z).setColor(r, g, b, 0.6f * pulse);
+
+                buf.addVertex(matrix, size, 0, z).setColor(r, g, b, 0.6f * pulse);
+                buf.addVertex(matrix, size, size, z).setColor(r, g, b, 0.6f * pulse);
+                buf.addVertex(matrix, 0, size, z).setColor(r, g, b, 0.6f * pulse);
+                buf.addVertex(matrix, 0, 0, z).setColor(r, g, b, 0.6f * pulse);
+
+                BufferUploader.drawWithShader(buf.build());
+                RenderSystem.depthMask(true);
+                RenderSystem.disableBlend();
+            }
+        }
+    }
 
     @SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent event) {
