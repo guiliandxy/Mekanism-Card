@@ -5,52 +5,52 @@
 [![NeoForge Version](https://img.shields.io/badge/NeoForge-21.1.220-orange)](https://neoforged.net/)
 [![License](https://img.shields.io/badge/License-GPL%20v3.0-blue)](LICENSE)
 
-一个为 Mekanism 模组设计的批量操作工具，让你在建造大型工厂时省去繁琐的重复点击！
+Batch operation tools for Mekanism mod - save hours of tedious clicking when building large factories!
 
 ---
 
-## 功能介绍
+## Features
 
-### 批量升级配置器 (Mass Upgrade Configurator)
+### Mass Upgrade Configurator
 
-**一键批量安装/移除升级模块**
+**Bulk install/remove upgrade modules in one click**
 
-- **批量安装**: 将背包中的升级模块自动安装到附近所有同类机器
-- **批量移除**: 一键移除附近所有机器的升级模块并回收到背包
-- **智能检测**: 自动识别背包中的升级类型（速度、节能、静音等）
-- **可视化反馈**: 游戏内显示彩色边框提示当前状态
-  - 绿色 = 安装模式
-  - 红色 = 移除模式
-  - 灰色 = 无可用升级
+- **Bulk Install**: Automatically install upgrade modules from your inventory to all nearby machines of the same type
+- **Bulk Remove**: Remove all upgrades from nearby machines and collect them back to your inventory
+- **Smart Detection**: Automatically detects upgrade type in your inventory (Speed, Energy, Muffling, etc.)
+- **Visual Feedback**: Colored outlines in-game to indicate current status
+  - Green = Install mode
+  - Red = Remove mode
+  - Grey = No upgrade available
 
-**两种操作模式**:
-- **半径模式**: 蹲下右键机器，影响 5 格范围内的所有同类机器
-- **选区模式**: 蹲下右键设置两个角点，定义立方体区域进行批量操作
+**Two Operation Modes**:
+- **Radius Mode**: Sneak + right-click a machine to affect all machines within 5 blocks
+- **Selection Mode**: Sneak + right-click to set two corner points, defining a cuboid area for batch operations
 
-### 内存卡 (Memory Card)
+### Memory Card
 
-**复制粘贴机器配置**
+**Copy & Paste Machine Configurations**
 
-- **复制配置**: 右键 Mekanism 机器，复制其配置（升级、设置等）
-- **粘贴配置**: 右键同类型机器，一键粘贴相同配置
-- **批量粘贴**: 配合选区模式，快速配置大量机器
-- **创造模式支持**: 创造模式下粘贴不消耗升级材料
+- **Copy Config**: Right-click a Mekanism machine to copy its configuration (upgrades, settings, etc.)
+- **Paste Config**: Right-click a machine of the same type to apply the copied configuration
+- **Batch Paste**: Combine with selection mode to configure multiple machines at once
+- **Creative Mode**: Pasting in creative mode doesn't consume upgrade materials
 
-**操作方式**:
-- 空气右键：切换复制/粘贴模式
-- 右键机器：执行复制或粘贴
-- 蹲下+右键：清除保存的配置
+**Controls**:
+- Right-click air: Toggle between copy/paste mode
+- Right-click machine: Execute copy or paste
+- Sneak + right-click: Clear saved configuration
 
-### 指南书 (Guide Book)
+### Guide Book
 
-- 游戏内使用手册，右键即可打开
-- 包含详细的使用说明和配方信息
+- In-game manual, right-click to open
+- Contains detailed usage instructions and recipe information
 
 ---
 
-## 合成配方
+## Crafting Recipes
 
-### 批量升级配置器
+### Mass Upgrade Configurator
 
 ```
 A B A
@@ -58,11 +58,11 @@ B C B
 A B A
 ```
 
-- A: 原子合金 (Mekanism)
-- B: 终极控制电路 (Mekanism)
-- C: 配置卡 (Mekanism)
+- A: Atomic Alloy (Mekanism)
+- B: Ultimate Control Circuit (Mekanism)
+- C: Configuration Card (Mekanism)
 
-### 内存卡
+### Memory Card
 
 ```
 A B A
@@ -70,59 +70,59 @@ C D C
 B E B
 ```
 
-- A: HDPE板 (Mekanism)
-- B: 钋丸 (Mekanism)
-- C: 终极控制电路 (Mekanism)
-- D: 配置卡 (Mekanism)
-- E: QIO驱动器 (Mekanism)
+- A: HDPE Sheet (Mekanism)
+- B: Polonium Pellet (Mekanism)
+- C: Ultimate Control Circuit (Mekanism)
+- D: Configuration Card (Mekanism)
+- E: QIO Drive Base (Mekanism)
 
-### 指南书
+### Guide Book
 
 ```
-书本 + 批量升级配置器
+Book + Mass Upgrade Configurator
 ```
 
 ---
 
-## 使用说明
+## Usage Guide
 
-### 批量升级配置器
+### Mass Upgrade Configurator
 
-1. **合成工具**: 使用上述配方合成批量升级配置器
-2. **准备升级**: 确保背包中有需要安装的升级模块
-3. **选择模式**:
-   - 右键空气：切换安装/移除模式
-   - 蹲下+右键空气：切换半径/选区模式
-4. **执行操作**:
-   - 半径模式：蹲下右键机器
-   - 选区模式：设置两个角点后右键机器
+1. **Craft the tool**: Use the recipe above to craft the Mass Upgrade Configurator
+2. **Prepare upgrades**: Ensure you have upgrade modules in your inventory
+3. **Select mode**:
+   - Right-click air: Toggle install/remove mode
+   - Sneak + right-click air: Toggle radius/selection mode
+4. **Execute operation**:
+   - Radius mode: Sneak + right-click a machine
+   - Selection mode: Set two corner points, then right-click a machine
 
-### 内存卡
+### Memory Card
 
-1. **合成工具**: 使用上述配方合成内存卡
-2. **复制配置**: 右键一个已配置好的 Mekanism 机器
-3. **粘贴配置**: 右键同类型的其他机器
-4. **清除配置**: 蹲下+右键空气
+1. **Craft the tool**: Use the recipe above to craft the Memory Card
+2. **Copy configuration**: Right-click a configured Mekanism machine
+3. **Paste configuration**: Right-click another machine of the same type
+4. **Clear configuration**: Sneak + right-click air
 
 ---
 
-## 安装说明
+## Installation
 
-**前置要求**:
+**Requirements**:
 - Minecraft 1.21.1
 - NeoForge 21.1.220+
 - Mekanism 10.7.14+
 
-**安装步骤**:
-1. 下载最新版本的模组文件
-2. 将 jar 文件放入 `.minecraft/mods` 文件夹
-3. 启动游戏
+**Steps**:
+1. Download the latest mod file
+2. Place the jar file into `.minecraft/mods` folder
+3. Launch the game
 
 ---
 
-## 开发构建
+## Development & Building
 
-如果你想参与开发或自行构建：
+To contribute or build from source:
 
 ```bash
 git clone https://github.com/rulanup/Mekanism-Card.git
@@ -130,21 +130,21 @@ cd Mekanism-Card
 ./gradlew build
 ```
 
-生成的 jar 文件位于 `build/libs/` 目录。
+Output jar will be in `build/libs/` directory.
 
-运行数据生成：
+Run data generation:
 ```bash
 ./gradlew runData
 ```
 
 ---
 
-## 多语言支持
+## Language Support
 
-支持以下语言：
-- 简体中文 (zh_cn)
-- 繁体中文 (zh_tw)
+Supported languages:
 - English (en_us / en_gb)
+- 简体中文 (zh_cn)
+- 繁體中文 (zh_tw)
 - 日本語 (ja_jp)
 - 한국어 (ko_kr)
 - Deutsch (de_de)
@@ -157,14 +157,14 @@ cd Mekanism-Card
 
 ---
 
-## 许可证
+## License
 
-本项目采用 [GNU GPLv3](LICENSE) 许可证。
+This project is licensed under [GNU GPLv3](LICENSE).
 
 ---
 
-## 相关链接
+## Links
 
-- [GitHub 仓库](https://github.com/rulanup/Mekanism-Card)
-- [Mekanism 模组](https://www.curseforge.com/minecraft/mc-mods/mekanism)
+- [GitHub Repository](https://github.com/rulanup/Mekanism-Card)
+- [Mekanism Mod](https://www.curseforge.com/minecraft/mc-mods/mekanism)
 - [NeoForge](https://neoforged.net/)
