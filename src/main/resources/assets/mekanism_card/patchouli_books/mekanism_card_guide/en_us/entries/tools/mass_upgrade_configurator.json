@@ -12,7 +12,7 @@
     {
       "type": "text",
       "title": "Selecting Upgrade",
-      "text": "Before using the tool, you need to select an upgrade module from your inventory.$(br)$(br)The tool will automatically detect upgrade modules in your inventory and display the current upgrade in the item tooltip."
+      "text": "Before using the tool, you need to have upgrade modules in your inventory.$(br)$(br)The tool will automatically detect upgrade modules and display the current upgrade type in the item tooltip."
     },
     {
       "type": "text",
@@ -22,12 +22,12 @@
     {
       "type": "text",
       "title": "Radius Mode",
-      "text": "In Radius Mode:$(br)$(li)Sneak + Right-click machine: Apply operation to all adjacent machines$(li)Right-click air: Switch mode$(li)Sneak + Right-click air: Toggle selection mode"
+      "text": "In Radius Mode:$(br)$(li)Sneak + Right-click machine: Apply operation to all adjacent machines$(li)Right-click air: Switch install/remove mode$(li)Sneak + Right-click air: Toggle selection mode"
     },
     {
       "type": "text",
       "title": "Selection Mode",
-      "text": "In Selection Mode:$(br)$(li)Sneak + Right-click: Set first/second corner of selection$(li)Right-click: Execute batch operation on all machines in selection$(br)$(br)Select two corners to define a cubic area."
+      "text": "In Selection Mode:$(br)$(li)Sneak + Right-click: Set first/second corner of selection$(li)Right-click: Execute batch operation on all machines in selection$(br)$(br)Select two corners to define a cubic area, then right-click a machine to execute."
     },
     {
       "type": "image",

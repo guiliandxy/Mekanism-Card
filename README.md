@@ -2,7 +2,7 @@
 
 [![Minecraft Version](https://img.shields.io/badge/Minecraft-1.21.1-blue)](https://www.minecraft.net)
 [![Mekanism Version](https://img.shields.io/badge/Mekanism-10.7.14%2B-green)](https://www.curseforge.com/minecraft/mc-mods/mekanism)
-[![NeoForge Version](https://img.shields.io/badge/NeoForge-21.1.220-orange)](https://neoforged.net/)
+[![NeoForge Version](https://img.shields.io/badge/NeoForge-21.1.215-orange)](https://neoforged.net/)
 [![License](https://img.shields.io/badge/License-GPL%20v3.0-blue)](LICENSE)
 
 Batch operation tools for Mekanism mod - save hours of tedious clicking when building large factories!
@@ -10,6 +10,18 @@ Batch operation tools for Mekanism mod - save hours of tedious clicking when bui
 ---
 
 ## Features
+
+### Ultimate Tier Installer
+
+**One-click upgrade to Ultimate tier**
+
+- **Instant Upgrade**: Right-click any Mekanism machine to instantly upgrade it to Ultimate tier
+- **Energy System**: Stores up to 200,000 FE; each upgrade consumes 1,000 FE
+- **Chargeable**: Can be charged using Mekanism Energy Cubes or any compatible charger
+- **AE2 Integration**: Extract upgrade items from a bound AE2 network via Wireless Access Point
+- **QIO Integration**: Extract upgrade items from a bound QIO frequency
+- **Smart Consumption**: Items consumed in priority order: Inventory > AE2 > QIO
+- **Area Upgrade Mode**: Press Ctrl + Right-click to toggle area mode, which upgrades all connected machines (blocks touching each other) at once
 
 ### Mass Upgrade Configurator
 
@@ -31,24 +43,39 @@ Batch operation tools for Mekanism mod - save hours of tedious clicking when bui
 
 **Copy & Paste Machine Configurations**
 
-- **Copy Config**: Right-click a Mekanism machine to copy its configuration (upgrades, settings, etc.)
+- **Copy Config**: Sneak + Right-click a Mekanism machine to copy its configuration (upgrades, settings, etc.)
 - **Paste Config**: Right-click a machine of the same type to apply the copied configuration
-- **Batch Paste**: Combine with selection mode to configure multiple machines at once
+- **Batch Paste**: Automatically applies to all connected machines of the same type
 - **Creative Mode**: Pasting in creative mode doesn't consume upgrade materials
 
 **Controls**:
-- Right-click air: Toggle between copy/paste mode
-- Right-click machine: Execute copy or paste
-- Sneak + right-click: Clear saved configuration
+- Right-click machine: Copy (if no data) or Paste (if has data)
+- Sneak + Right-click air: Clear stored configuration
 
 ### Guide Book
 
 - In-game manual, right-click to open
-- Contains detailed usage instructions and recipe information
+- Contains detailed usage instructions for all tools
 
 ---
 
 ## Crafting Recipes
+
+### Ultimate Tier Installer
+
+```
+A B A
+C D C
+E F G
+```
+
+- A: Ultimate Control Circuit (Mekanism)
+- B: Teleporter (Mekanism)
+- C: Ultimate Mechanical Pipe (Mekanism)
+- D: Ultimate Energy Cube (Mekanism)
+- E: Polonium Pellet (Mekanism)
+- F: Structural Glass (Mekanism)
+- G: Plutonium Pellet (Mekanism)
 
 ### Mass Upgrade Configurator
 
@@ -86,6 +113,15 @@ Book + Mass Upgrade Configurator
 
 ## Usage Guide
 
+### Ultimate Tier Installer
+
+1. **Craft the tool**: Use the recipe above to craft the Ultimate Tier Installer
+2. **Charge it**: Place it in a Mekanism Energy Cube or compatible charger (needs 1,000 FE per upgrade)
+3. **(Optional) Bind AE2 network**: Place the item in a Wireless Access Point's link slot
+4. **(Optional) Bind QIO frequency**: Sneak + Right-click any QIO block with a frequency selected
+5. **Execute upgrade**: Right-click a machine to upgrade it to Ultimate tier
+6. **Area mode**: Press Ctrl + Right-click to toggle area mode, then right-click a machine to upgrade all connected machines
+
 ### Mass Upgrade Configurator
 
 1. **Craft the tool**: Use the recipe above to craft the Mass Upgrade Configurator
@@ -100,9 +136,9 @@ Book + Mass Upgrade Configurator
 ### Memory Card
 
 1. **Craft the tool**: Use the recipe above to craft the Memory Card
-2. **Copy configuration**: Right-click a configured Mekanism machine
+2. **Copy configuration**: Sneak + Right-click a configured Mekanism machine
 3. **Paste configuration**: Right-click another machine of the same type
-4. **Clear configuration**: Sneak + right-click air
+4. **Clear configuration**: Sneak + Right-click air
 
 ---
 
@@ -112,6 +148,7 @@ Book + Mass Upgrade Configurator
 - Minecraft 1.21.1
 - NeoForge 21.1.220+
 - Mekanism 10.7.14+
+- (Optional) AE2 19.2+ for AE2 network integration
 
 **Steps**:
 1. Download the latest mod file
@@ -165,6 +202,8 @@ This project is licensed under [GNU GPLv3](LICENSE).
 
 ## Links
 
+- [CurseForge](https://www.curseforge.com/minecraft/mc-mods/mekanism-card)
 - [GitHub Repository](https://github.com/rulanup/Mekanism-Card)
 - [Mekanism Mod](https://www.curseforge.com/minecraft/mc-mods/mekanism)
+- [AE2 Mod](https://modrinth.com/mod/ae2)
 - [NeoForge](https://neoforged.net/)

@@ -1,0 +1,48 @@
+{
+  "name": "Ultimate Tier Installer",
+  "icon": "mekanism_card:ultimate_tier_installer",
+  "category": "mekanism_card:tools",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "spotlight",
+      "item": "mekanism_card:ultimate_tier_installer",
+      "text": "The Ultimate Tier Installer instantly upgrades any Mekanism machine to Ultimate tier with a single right-click."
+    },
+    {
+      "type": "text",
+      "title": "Energy",
+      "text": "The item stores up to $(l)200,000 FE$() of energy. Each machine upgrade consumes $(l)1,000 FE$().$(br)$(br)It can be charged using Mekanism Energy Cubes or any compatible energy charger. The energy bar on the item shows the current charge level."
+    },
+    {
+      "type": "text",
+      "title": "Upgrade Items",
+      "text": "Upgrading machines requires tier installer items:$(br)$(li)Basic Tier Installer: For single machines → Basic Factory$(li)Advanced Tier Installer: Basic → Advanced$(li)Elite Tier Installer: Advanced → Elite$(li)Ultimate Tier Installer: Elite → Ultimate$(br)$(br)These items are consumed from your inventory first, then from connected networks."
+    },
+    {
+      "type": "text",
+      "title": "AE2 Integration",
+      "text": "The installer can extract upgrade items from a bound $(l)AE2 network$().$(br)$(br)To bind: Place the installer in a $(l)Wireless Access Point$()'s link slot. The tooltip will show the bound WAP position. Upgrade items will be pulled from the AE2 network when your inventory doesn't have enough."
+    },
+    {
+      "type": "text",
+      "title": "QIO Integration",
+      "text": "The installer can also extract upgrade items from a bound $(l)QIO frequency$().$(br)$(br)To bind: $(l)Sneak + Right-click$() any QIO block (Drive Array, Dashboard, etc.) that has a frequency selected. The tooltip will show the bound QIO frequency name."
+    },
+    {
+      "type": "text",
+      "title": "Consumption Priority",
+      "text": "When upgrading, items are consumed in this order:$(br)$(li)1. Player Inventory$(li)2. Bound AE2 Network$(li)3. Bound QIO Frequency$(br)$(br)This allows seamless upgrades across all your storage systems."
+    },
+    {
+      "type": "text",
+      "title": "Area Upgrade Mode",
+      "text": "Press $(l)Ctrl + Right-click$() to toggle Area Mode. In this mode, right-clicking a machine will upgrade $(l)all connected machines$() (blocks touching each other) to Ultimate tier at once.$(br)$(br)Energy and upgrade items are consumed for each machine upgraded."
+    },
+    {
+      "type": "text",
+      "title": "Crafting",
+      "text": "The Ultimate Tier Installer is crafted with:$(br)$(li)Top: Ultimate Control Circuit | Teleporter | Ultimate Control Circuit$(li)Middle: Ultimate Mechanical Pipe | Ultimate Energy Cube | Ultimate Mechanical Pipe$(li)Bottom: Polonium Pellet | Structural Glass | Plutonium Pellet"
+    }
+  ]
+}

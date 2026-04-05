@@ -61,5 +61,42 @@ public class ModRecipeProvider extends RecipeProvider {
                 .requires(MekanismCard.MASS_UPGRADE_CONFIGURATOR.get())
                 .unlockedBy("has_upgrade_configurator", has(MekanismCard.MASS_UPGRADE_CONFIGURATOR.get()))
                 .save(output);
+
+        Item tierInstaller = BuiltInRegistries.ITEM.get(ResourceLocation.parse("mekanism:ultimate_tier_installer"));
+        Item beacon = BuiltInRegistries.ITEM.get(ResourceLocation.parse("minecraft:beacon"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, MekanismCard.ULTIMATE_TIER_INSTALLER.get())
+                .pattern("ABA")
+                .pattern("BCB")
+                .pattern("ABA")
+                .define('A', ultimateCircuit)
+                .define('B', beacon)
+                .define('C', tierInstaller)
+                .unlockedBy("has_tier_installer", has(tierInstaller))
+                .unlockedBy("has_beacon", has(beacon))
+                .unlockedBy("has_circuit", has(ultimateCircuit))
+                .save(output);
+
+        Item teleporter = BuiltInRegistries.ITEM.get(ResourceLocation.parse("mekanism:teleporter"));
+        Item ultimatePipe = BuiltInRegistries.ITEM.get(ResourceLocation.parse("mekanism:ultimate_mechanical_pipe"));
+        Item ultimateCube = BuiltInRegistries.ITEM.get(ResourceLocation.parse("mekanism:ultimate_energy_cube"));
+        Item structuralGlass = BuiltInRegistries.ITEM.get(ResourceLocation.parse("mekanism:structural_glass"));
+        Item plutoniumPellet = BuiltInRegistries.ITEM.get(ResourceLocation.parse("mekanism:pellet_plutonium"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, MekanismCard.ULTIMATE_TIER_INSTALLER.get(), 1)
+                .pattern("ABA")
+                .pattern("CDC")
+                .pattern("EFG")
+                .define('A', ultimateCircuit)
+                .define('B', teleporter)
+                .define('C', ultimatePipe)
+                .define('D', ultimateCube)
+                .define('E', poloniumPellet)
+                .define('F', structuralGlass)
+                .define('G', plutoniumPellet)
+                .unlockedBy("has_teleporter", has(teleporter))
+                .unlockedBy("has_ultimate_cube", has(ultimateCube))
+                .unlockedBy("has_ultimate_circuit", has(ultimateCircuit))
+                .save(output, ResourceLocation.parse(MekanismCard.MOD_ID + ":ultimate_tier_installer_alt"));
     }
 }

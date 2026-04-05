@@ -1,0 +1,36 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "A": {
+      "item": "mekanism:ultimate_control_circuit"
+    },
+    "B": {
+      "item": "mekanism:teleporter"
+    },
+    "C": {
+      "item": "mekanism:ultimate_mechanical_pipe"
+    },
+    "D": {
+      "item": "mekanism:ultimate_energy_cube"
+    },
+    "E": {
+      "item": "mekanism:pellet_polonium"
+    },
+    "F": {
+      "item": "mekanism:structural_glass"
+    },
+    "G": {
+      "item": "mekanism:pellet_plutonium"
+    }
+  },
+  "pattern": [
+    "ABA",
+    "CDC",
+    "EFG"
+  ],
+  "result": {
+    "count": 1,
+    "id": "mekanism_card:ultimate_tier_installer"
+  }
+}

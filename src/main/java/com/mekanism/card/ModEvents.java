@@ -3,9 +3,19 @@ package com.mekanism.card;
 import com.mekanism.card.item.MassUpgradeConfigurator;
 import com.mekanism.card.item.MemoryCard;
 import mekanism.api.IConfigCardAccess;
+import mekanism.api.inventory.qio.IQIOFrequency;
+import mekanism.common.content.qio.IQIOFrequencyHolder;
+import mekanism.common.content.qio.QIOFrequency;
+import mekanism.common.lib.frequency.Frequency.FrequencyIdentity;
+import mekanism.common.lib.frequency.FrequencyType;
+import mekanism.common.lib.frequency.IFrequencyItem;
+import mekanism.common.network.PacketUtils;
+import mekanism.common.network.to_server.frequency.PacketSetItemFrequency;
+import mekanism.common.registries.MekanismDataComponents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -43,43 +53,69 @@ public class ModEvents {
         }
 
         if (!(stack.getItem() instanceof MassUpgradeConfigurator configurator)) {
+            if (stack.getItem() instanceof IFrequencyItem freqItem && freqItem.getFrequencyType() == FrequencyType.QIO) {
+                handleQIOBinding(event, player, stack);
+            }
             return;
         }
 
-        // 只在服务端处理逻辑
         if (event.getLevel().isClientSide) {
             return;
         }
 
-        // 显示当前模式信息
         displayModeInfo(player, configurator, stack);
 
         boolean selectionMode = configurator.isSelectionModeActive(stack);
 
-        // 根据模式和按键执行对应操作
         if (selectionMode) {
-            // 检测距离并可能清除选区
             configurator.checkAndClearSelectionIfTooFar(event.getLevel(), player, stack);
 
             if (player.isShiftKeyDown()) {
-                // 设置角点
                 configurator.handleSelectionModeSetPoint(event.getLevel(), event.getPos(), player, stack);
                 event.setCanceled(true);
             } else {
-                // 执行选区操作
                 configurator.handleSelectionModeExecute(event.getLevel(), event.getPos(), player, stack);
                 event.setCanceled(true);
             }
         } else {
             if (player.isShiftKeyDown()) {
-                // 半径模式批量操作
                 configurator.handleRadiusMode(event.getLevel(), event.getPos(), player);
                 event.setCanceled(true);
             } else {
-                // 非蹲下，什么也不做，但必须取消原版交互，否则可能打开 GUI
                 event.setCanceled(true);
             }
         }
+    }
+
+    private static void handleQIOBinding(PlayerInteractEvent.RightClickBlock event, Player player, ItemStack stack) {
+        if (event.getLevel().isClientSide) {
+            return;
+        }
+
+        if (!player.isShiftKeyDown()) {
+            return;
+        }
+
+        BlockPos pos = event.getPos();
+        if (!(event.getLevel().getBlockEntity(pos) instanceof IQIOFrequencyHolder holder)) {
+            return;
+        }
+
+        QIOFrequency freq = holder.getQIOFrequency();
+        if (freq == null || !freq.isValid()) {
+            player.displayClientMessage(Component.translatable("message.mekanism_card.ultimate_installer.qio_no_frequency")
+                    .withStyle(ChatFormatting.RED), true);
+            event.setCanceled(true);
+            return;
+        }
+
+        FrequencyIdentity identity = freq.getIdentity();
+        PacketSetItemFrequency packet = new PacketSetItemFrequency(true, FrequencyType.QIO, identity, InteractionHand.MAIN_HAND);
+        PacketUtils.sendToServer(packet);
+
+        player.displayClientMessage(Component.translatable("message.mekanism_card.ultimate_installer.qio_bound_success", freq.getName())
+                .withStyle(ChatFormatting.GREEN), true);
+        event.setCanceled(true);
     }
 
     @SubscribeEvent

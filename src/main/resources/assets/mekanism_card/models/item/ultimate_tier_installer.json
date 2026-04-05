@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "mekanism_card:item/ultimate_tier_installer"
+  }
+}

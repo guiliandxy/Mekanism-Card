@@ -7,12 +7,12 @@
     {
       "type": "spotlight",
       "item": "mekanism_card:memory_card",
-      "text": "The Memory Card is used to copy and paste machine configurations between Mekanism machines. It can store configuration from one machine and apply it to others."
+      "text": "The Memory Card copies and pastes machine configurations between Mekanism machines. It stores configuration and upgrades from one machine and applies them to others."
     },
     {
       "type": "text",
       "title": "Copying",
-      "text": "To copy configuration:$(br)$(li)Sneak + Right-click a machine: Copy config and upgrades to the card$(br)$(br)The tooltip will show how many machines' config is stored."
+      "text": "To copy configuration:$(br)$(li)Sneak + Right-click a machine: Copy config and upgrades to the card$(br)$(br)The tooltip will show the source machine type."
     },
     {
       "type": "text",
@@ -21,8 +21,8 @@
     },
     {
       "type": "text",
-      "title": "Modes",
-      "text": "The memory card has two modes:$(br)$(li)Copy Mode: For copying configurations$(li)Paste Mode: For pasting configurations$(br)$(br)Right-click in air to switch modes."
+      "title": "Clearing",
+      "text": "To clear stored configuration:$(br)$(li)Sneak + Right-click air: Clear the stored config$(br)$(br)This resets the card so you can copy a new machine."
     }
   ]
 }
