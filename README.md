@@ -11,6 +11,26 @@ Batch operation tools for Mekanism mod - save hours of tedious clicking when bui
 
 ## Features
 
+### Super Fusion Card
+
+**All-in-one tool: tier upgrades, module installation, and config copy/paste**
+
+- **Three Fusion Modes**: Cycle between Tier Install, Module Upgrade, and Memory Copy/Paste
+- **Area/Single Toggle**: Switch between affecting a single machine or all connected machines
+- **Selection Mode**: Define a custom cuboid area for batch operations
+- **Middle-Click Quick Install**: Middle-click a machine to automatically install all supported upgrade modules (each to max capacity)
+  - In Radius Mode: batch installs on all adjacent connected machines
+  - In Selection Mode: batch installs on all machines within the selection area
+- **AE2 & QIO Integration**: Pulls tier installers and upgrade modules from bound networks
+- **Energy System**: Stores up to 200,000 FE; each tier upgrade consumes 1,000 FE
+
+**Controls**:
+- Ctrl + Right-click air: Cycle fusion mode
+- Shift + Right-click air: Toggle module selection mode
+- Ctrl + Shift + Right-click air: Toggle area/single mode
+- Right-click machine: Execute current fusion mode (blocks machine UI)
+- Middle-click machine: Install all supported upgrades (respects area/selection mode)
+
 ### Ultimate Tier Installer
 
 **One-click upgrade to Ultimate tier**
@@ -29,6 +49,9 @@ Batch operation tools for Mekanism mod - save hours of tedious clicking when bui
 
 - **Bulk Install**: Automatically install upgrade modules from your inventory to all nearby machines of the same type
 - **Bulk Remove**: Remove all upgrades from nearby machines and collect them back to your inventory
+- **Middle-Click Quick Install**: Middle-click a machine to automatically install all supported upgrade modules (each to max capacity)
+  - In Radius Mode: batch installs on all adjacent connected machines
+  - In Selection Mode: batch installs on all machines within the selection area
 - **Smart Detection**: Automatically detects upgrade type in your inventory (Speed, Energy, Muffling, etc.)
 - **Visual Feedback**: Colored outlines in-game to indicate current status
   - Green = Install mode
@@ -36,14 +59,14 @@ Batch operation tools for Mekanism mod - save hours of tedious clicking when bui
   - Grey = No upgrade available
 
 **Two Operation Modes**:
-- **Radius Mode**: Sneak + right-click a machine to affect all machines within 5 blocks
+- **Radius Mode**: Sneak + right-click a machine to affect all adjacent connected machines
 - **Selection Mode**: Sneak + right-click to set two corner points, defining a cuboid area for batch operations
 
 ### Memory Card
 
 **Copy & Paste Machine Configurations**
 
-- **Copy Config**: Sneak + Right-click a Mekanism machine to copy its configuration (upgrades, settings, etc.)
+- **Copy Config**: Right-click a Mekanism machine to copy its configuration (upgrades, settings, etc.)
 - **Paste Config**: Right-click a machine of the same type to apply the copied configuration
 - **Batch Paste**: Automatically applies to all connected machines of the same type
 - **Creative Mode**: Pasting in creative mode doesn't consume upgrade materials
@@ -54,12 +77,28 @@ Batch operation tools for Mekanism mod - save hours of tedious clicking when bui
 
 ### Guide Book
 
-- In-game manual, right-click to open
+- In-game manual powered by GuideME, right-click to open
 - Contains detailed usage instructions for all tools
 
 ---
 
 ## Crafting Recipes
+
+### Super Fusion Card
+
+```
+A B A
+C D C
+E F G
+```
+
+- A: Steel Ingot
+- B: Mass Upgrade Configurator
+- C: Memory Card
+- D: Basic Energy Cube (Mekanism)
+- E: Mekanism Configuration Card
+- F: Osmium Ingot
+- G: Steel Ingot
 
 ### Ultimate Tier Installer
 
@@ -113,6 +152,16 @@ Book + Mass Upgrade Configurator
 
 ## Usage Guide
 
+### Super Fusion Card
+
+1. **Craft the tool**: Use the recipe above to craft the Super Fusion Card
+2. **Charge it**: Place it in a Mekanism Energy Cube or compatible charger (needs 1,000 FE per tier upgrade)
+3. **(Optional) Bind AE2 network**: Place the item in a Wireless Access Point's link slot
+4. **(Optional) Bind QIO frequency**: Sneak + Right-click any QIO block with a frequency selected
+5. **Switch modes**: Ctrl + Right-click air to cycle between Tier Install, Module Upgrade, and Memory Copy/Paste
+6. **Quick install all upgrades**: Middle-click a machine to install all supported upgrade modules at once
+7. **Area mode**: Ctrl + Shift + Right-click air to toggle area/single mode for batch operations
+
 ### Ultimate Tier Installer
 
 1. **Craft the tool**: Use the recipe above to craft the Ultimate Tier Installer
@@ -125,18 +174,19 @@ Book + Mass Upgrade Configurator
 ### Mass Upgrade Configurator
 
 1. **Craft the tool**: Use the recipe above to craft the Mass Upgrade Configurator
-2. **Prepare upgrades**: Ensure you have upgrade modules in your inventory
+2. **Prepare upgrades**: Ensure you have upgrade modules in your inventory or bound network
 3. **Select mode**:
    - Right-click air: Toggle install/remove mode
    - Sneak + right-click air: Toggle radius/selection mode
 4. **Execute operation**:
    - Radius mode: Sneak + right-click a machine
    - Selection mode: Set two corner points, then right-click a machine
+5. **Quick install all upgrades**: Middle-click a machine to install all supported upgrades at once (respects area/selection mode)
 
 ### Memory Card
 
 1. **Craft the tool**: Use the recipe above to craft the Memory Card
-2. **Copy configuration**: Sneak + Right-click a configured Mekanism machine
+2. **Copy configuration**: Right-click a configured Mekanism machine
 3. **Paste configuration**: Right-click another machine of the same type
 4. **Clear configuration**: Sneak + Right-click air
 
@@ -148,6 +198,7 @@ Book + Mass Upgrade Configurator
 - Minecraft 1.21.1
 - NeoForge 21.1.220+
 - Mekanism 10.7.14+
+- GuideME 21.1.15+
 - (Optional) AE2 19.2+ for AE2 network integration
 
 **Steps**:
@@ -206,4 +257,5 @@ This project is licensed under [GNU GPLv3](LICENSE).
 - [GitHub Repository](https://github.com/rulanup/Mekanism-Card)
 - [Mekanism Mod](https://www.curseforge.com/minecraft/mc-mods/mekanism)
 - [AE2 Mod](https://modrinth.com/mod/ae2)
+- [GuideME](https://modrinth.com/mod/guideme)
 - [NeoForge](https://neoforged.net/)

@@ -27,6 +27,8 @@ sourceSets.main.resources {
 }
 
 repositories {
+    mavenCentral()
+
     maven {
         name = "ModMaven"
         url = "https://modmaven.dev/"
@@ -121,7 +123,8 @@ configurations {
 dependencies {
     implementation "mekanism:Mekanism:${minecraft_version}-10.7.14.79"
     implementation "mekanism:Mekanism:${minecraft_version}-10.7.14.79:generators"
-    implementation "vazkii.patchouli:Patchouli:1.21.1-93-NEOFORGE"
+    compileOnly "org.appliedenergistics:guideme:${guideme_version}:api"
+    runtimeOnly "org.appliedenergistics:guideme:${guideme_version}"
     compileOnly "org.appliedenergistics:appliedenergistics2:19.2.17:api"
     // Full AE2 mod for runtime testing
     runtimeOnly "org.appliedenergistics:appliedenergistics2:19.2.17"

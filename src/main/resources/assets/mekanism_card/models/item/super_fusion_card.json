@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "mekanism_card:item/super_fusion_card"
+  }
+}

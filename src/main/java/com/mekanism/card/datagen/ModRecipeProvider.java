@@ -26,9 +26,9 @@ public class ModRecipeProvider extends RecipeProvider {
         Item alloyAtomic = BuiltInRegistries.ITEM.get(ResourceLocation.parse("mekanism:alloy_atomic"));
         Item ultimateCircuit = BuiltInRegistries.ITEM.get(ResourceLocation.parse("mekanism:ultimate_control_circuit"));
         Item configCard = BuiltInRegistries.ITEM.get(ResourceLocation.parse("mekanism:configuration_card"));
-        Item hdpeSheet = BuiltInRegistries.ITEM.get(ResourceLocation.parse("mekanism:hdpe_sheet"));
-        Item poloniumPellet = BuiltInRegistries.ITEM.get(ResourceLocation.parse("mekanism:pellet_polonium"));
-        Item qioDriveBase = BuiltInRegistries.ITEM.get(ResourceLocation.parse("mekanism:qio_drive_base"));
+        Item steelIngot = BuiltInRegistries.ITEM.get(ResourceLocation.parse("mekanism:ingot_steel"));
+        Item osmiumIngot = BuiltInRegistries.ITEM.get(ResourceLocation.parse("mekanism:ingot_osmium"));
+        Item basicEnergyCube = BuiltInRegistries.ITEM.get(ResourceLocation.parse("mekanism:basic_energy_cube"));
 
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, MekanismCard.MASS_UPGRADE_CONFIGURATOR.get())
                 .pattern("ABA")
@@ -43,16 +43,12 @@ public class ModRecipeProvider extends RecipeProvider {
                 .save(output);
 
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, MekanismCard.MEMORY_CARD.get())
+                .pattern("AAA")
                 .pattern("ABA")
-                .pattern("CDC")
-                .pattern("BEB")
-                .define('A', hdpeSheet)
-                .define('B', poloniumPellet)
-                .define('C', ultimateCircuit)
-                .define('D', configCard)
-                .define('E', qioDriveBase)
-                .unlockedBy("has_hdpe", has(hdpeSheet))
-                .unlockedBy("has_circuit", has(ultimateCircuit))
+                .pattern("AAA")
+                .define('A', Items.DIAMOND)
+                .define('B', configCard)
+                .unlockedBy("has_diamond", has(Items.DIAMOND))
                 .unlockedBy("has_card", has(configCard))
                 .save(output);
 
@@ -81,6 +77,7 @@ public class ModRecipeProvider extends RecipeProvider {
         Item ultimatePipe = BuiltInRegistries.ITEM.get(ResourceLocation.parse("mekanism:ultimate_mechanical_pipe"));
         Item ultimateCube = BuiltInRegistries.ITEM.get(ResourceLocation.parse("mekanism:ultimate_energy_cube"));
         Item structuralGlass = BuiltInRegistries.ITEM.get(ResourceLocation.parse("mekanism:structural_glass"));
+        Item poloniumPellet = BuiltInRegistries.ITEM.get(ResourceLocation.parse("mekanism:pellet_polonium"));
         Item plutoniumPellet = BuiltInRegistries.ITEM.get(ResourceLocation.parse("mekanism:pellet_plutonium"));
 
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, MekanismCard.ULTIMATE_TIER_INSTALLER.get(), 1)
@@ -98,5 +95,20 @@ public class ModRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_ultimate_cube", has(ultimateCube))
                 .unlockedBy("has_ultimate_circuit", has(ultimateCircuit))
                 .save(output, ResourceLocation.parse(MekanismCard.MOD_ID + ":ultimate_tier_installer_alt"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, MekanismCard.SUPER_FUSION_CARD.get())
+                .pattern("ABA")
+                .pattern("CDE")
+                .pattern("AFA")
+                .define('A', steelIngot)
+                .define('B', MekanismCard.MASS_UPGRADE_CONFIGURATOR.get())
+                .define('C', MekanismCard.MEMORY_CARD.get())
+                .define('D', basicEnergyCube)
+                .define('E', configCard)
+                .define('F', osmiumIngot)
+                .unlockedBy("has_mass_configurator", has(MekanismCard.MASS_UPGRADE_CONFIGURATOR.get()))
+                .unlockedBy("has_memory_card", has(MekanismCard.MEMORY_CARD.get()))
+                .unlockedBy("has_energy_cube", has(basicEnergyCube))
+                .save(output);
     }
 }

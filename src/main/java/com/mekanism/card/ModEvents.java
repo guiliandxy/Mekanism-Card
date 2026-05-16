@@ -2,22 +2,22 @@ package com.mekanism.card;
 
 import com.mekanism.card.item.MassUpgradeConfigurator;
 import com.mekanism.card.item.MemoryCard;
+import com.mekanism.card.item.SuperFusionCard;
 import mekanism.api.IConfigCardAccess;
 import mekanism.api.inventory.qio.IQIOFrequency;
+import mekanism.common.attachments.FrequencyAware;
 import mekanism.common.content.qio.IQIOFrequencyHolder;
 import mekanism.common.content.qio.QIOFrequency;
 import mekanism.common.lib.frequency.Frequency.FrequencyIdentity;
 import mekanism.common.lib.frequency.FrequencyType;
 import mekanism.common.lib.frequency.IFrequencyItem;
-import mekanism.common.network.PacketUtils;
-import mekanism.common.network.to_server.frequency.PacketSetItemFrequency;
 import mekanism.common.registries.MekanismDataComponents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
@@ -30,6 +30,10 @@ public class ModEvents {
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         Player player = event.getEntity();
         ItemStack stack = event.getItemStack();
+
+        if (stack.getItem() instanceof IFrequencyItem freqItem && freqItem.getFrequencyType() == FrequencyType.QIO && handleQIOBinding(event, player, stack)) {
+            return;
+        }
 
         if (stack.getItem() instanceof MemoryCard) {
             if (event.getLevel().isClientSide) {
@@ -52,10 +56,21 @@ public class ModEvents {
             return;
         }
 
-        if (!(stack.getItem() instanceof MassUpgradeConfigurator configurator)) {
-            if (stack.getItem() instanceof IFrequencyItem freqItem && freqItem.getFrequencyType() == FrequencyType.QIO) {
-                handleQIOBinding(event, player, stack);
+        if (stack.getItem() instanceof SuperFusionCard fusionCard) {
+            if (event.getLevel().isClientSide) {
+                return;
             }
+
+            switch (fusionCard.getFusionMode(stack)) {
+                case TIER_INSTALL -> fusionCard.useOn(new UseOnContext(player, event.getHand(), event.getHitVec()));
+                case MODULE_UPGRADE -> fusionCard.handleModuleOperation(event.getLevel(), event.getPos(), player, stack);
+                case MEMORY_COPY -> fusionCard.handleMemoryOperation(event.getLevel(), event.getPos(), player, stack);
+            }
+            event.setCanceled(true);
+            return;
+        }
+
+        if (!(stack.getItem() instanceof MassUpgradeConfigurator configurator)) {
             return;
         }
 
@@ -79,7 +94,7 @@ public class ModEvents {
             }
         } else {
             if (player.isShiftKeyDown()) {
-                configurator.handleRadiusMode(event.getLevel(), event.getPos(), player);
+                configurator.handleRadiusMode(event.getLevel(), event.getPos(), player, stack);
                 event.setCanceled(true);
             } else {
                 event.setCanceled(true);
@@ -87,35 +102,34 @@ public class ModEvents {
         }
     }
 
-    private static void handleQIOBinding(PlayerInteractEvent.RightClickBlock event, Player player, ItemStack stack) {
-        if (event.getLevel().isClientSide) {
-            return;
-        }
-
+    private static boolean handleQIOBinding(PlayerInteractEvent.RightClickBlock event, Player player, ItemStack stack) {
         if (!player.isShiftKeyDown()) {
-            return;
+            return false;
         }
 
         BlockPos pos = event.getPos();
         if (!(event.getLevel().getBlockEntity(pos) instanceof IQIOFrequencyHolder holder)) {
-            return;
+            return false;
         }
+
+        if (event.getLevel().isClientSide) {
+            return true;
+        }
+        event.setCanceled(true);
 
         QIOFrequency freq = holder.getQIOFrequency();
         if (freq == null || !freq.isValid()) {
             player.displayClientMessage(Component.translatable("message.mekanism_card.ultimate_installer.qio_no_frequency")
                     .withStyle(ChatFormatting.RED), true);
-            event.setCanceled(true);
-            return;
+            return true;
         }
 
         FrequencyIdentity identity = freq.getIdentity();
-        PacketSetItemFrequency packet = new PacketSetItemFrequency(true, FrequencyType.QIO, identity, InteractionHand.MAIN_HAND);
-        PacketUtils.sendToServer(packet);
+        stack.set(MekanismDataComponents.QIO_FREQUENCY.get(), FrequencyAware.create(FrequencyType.QIO, identity, player.getUUID()));
 
         player.displayClientMessage(Component.translatable("message.mekanism_card.ultimate_installer.qio_bound_success", freq.getName())
                 .withStyle(ChatFormatting.GREEN), true);
-        event.setCanceled(true);
+        return true;
     }
 
     @SubscribeEvent
@@ -143,4 +157,5 @@ public class ModEvents {
                         configurator.getCurrentMode().getDisplayName())
                 .withStyle(selectionMode ? ChatFormatting.AQUA : ChatFormatting.GOLD), true);
     }
+
 }

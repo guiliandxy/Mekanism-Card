@@ -1,8 +1,11 @@
 package com.mekanism.card.item;
 
+import com.mekanism.card.util.NetworkItemSource;
 import mekanism.api.IConfigCardAccess;
 import mekanism.api.SerializationConstants;
 import mekanism.api.Upgrade;
+import mekanism.common.lib.frequency.FrequencyType;
+import mekanism.common.lib.frequency.IFrequencyItem;
 import mekanism.common.tile.base.TileEntityMekanism;
 import mekanism.common.tile.component.TileComponentUpgrade;
 import net.minecraft.ChatFormatting;
@@ -31,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class MemoryCard extends net.minecraft.world.item.Item {
+public class MemoryCard extends net.minecraft.world.item.Item implements IFrequencyItem {
 
     public MemoryCard() {
         super(new Properties().stacksTo(1).rarity(Rarity.UNCOMMON));
@@ -46,12 +49,20 @@ public class MemoryCard extends net.minecraft.world.item.Item {
     @Override
     @OnlyIn(Dist.CLIENT)
     public void appendHoverText(ItemStack stack, net.minecraft.world.item.Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("tooltip.mekanism_card.memory_card.right_click_copy")
-                .withStyle(ChatFormatting.DARK_GREEN));
-        tooltip.add(Component.translatable("tooltip.mekanism_card.memory_card.right_click_paste")
-                .withStyle(ChatFormatting.DARK_AQUA));
-        tooltip.add(Component.translatable("tooltip.mekanism_card.memory_card.sneak_air_click_clear")
-                .withStyle(ChatFormatting.RED));
+        if (TooltipHelper.isDescriptionKeyDown()) {
+            tooltip.add(Component.translatable("tooltip.mekanism_card.memory_card.right_click_copy")
+                    .withStyle(ChatFormatting.DARK_GREEN));
+            tooltip.add(Component.translatable("tooltip.mekanism_card.memory_card.right_click_paste")
+                    .withStyle(ChatFormatting.DARK_AQUA));
+            tooltip.add(Component.translatable("tooltip.mekanism_card.memory_card.sneak_air_click_clear")
+                    .withStyle(ChatFormatting.RED));
+            tooltip.add(Component.translatable("tooltip.mekanism_card.network_support")
+                    .withStyle(ChatFormatting.AQUA));
+            tooltip.add(Component.translatable("tooltip.mekanism_card.network_priority")
+                    .withStyle(ChatFormatting.RED));
+            super.appendHoverText(stack, context, tooltip, flag);
+            return;
+        }
 
         CustomData customData = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
         CompoundTag tag = customData.copyTag();
@@ -71,13 +82,14 @@ public class MemoryCard extends net.minecraft.world.item.Item {
             tooltip.add(Component.translatable("tooltip.mekanism_card.memory_card.no_data")
                     .withStyle(ChatFormatting.RED));
         }
+        TooltipHelper.addHoldForDescription(tooltip);
 
         super.appendHoverText(stack, context, tooltip, flag);
     }
 
     public static void handleCopyStatic(Level level, BlockPos pos, Player player, ItemStack stack) {
         BlockEntity be = level.getBlockEntity(pos);
-        
+
         if (!(be instanceof IConfigCardAccess)) {
             player.displayClientMessage(Component.translatable("message.mekanism_card.memory_card.not_mekanism")
                     .withStyle(ChatFormatting.RED), true);
@@ -187,17 +199,13 @@ public class MemoryCard extends net.minecraft.world.item.Item {
         }
 
         boolean isCreative = player.getAbilities().instabuild;
-        
+
+        NetworkItemSource itemSource = NetworkItemSource.create(level, player, stack);
         Map<Upgrade, Integer> neededUpgrades = new EnumMap<>(Upgrade.class);
         if (!isCreative && machineData.contains(SerializationConstants.UPGRADES)) {
-            for (Map.Entry<Upgrade, Integer> entry : perMachineUpgrade.entrySet()) {
-                int totalNeeded = entry.getValue() * connectedMachines.size();
-                if (totalNeeded > 0) {
-                    neededUpgrades.put(entry.getKey(), totalNeeded);
-                }
-            }
-            
-            if (!neededUpgrades.isEmpty() && !hasEnoughUpgrades(player, neededUpgrades)) {
+            neededUpgrades = getNeededUpgrades(level, connectedMachines, perMachineUpgrade);
+
+            if (!neededUpgrades.isEmpty() && !hasEnoughUpgrades(itemSource, neededUpgrades)) {
                 player.displayClientMessage(Component.translatable("message.mekanism_card.memory_card.not_enough_upgrades")
                         .withStyle(ChatFormatting.RED), true);
                 return;
@@ -224,6 +232,10 @@ public class MemoryCard extends net.minecraft.world.item.Item {
                     for (Map.Entry<Upgrade, Integer> entry : perMachineUpgrade.entrySet()) {
                         Upgrade upgrade = entry.getKey();
                         int targetLevel = entry.getValue();
+
+                        if (!upgradeComp.supports(upgrade)) {
+                            continue;
+                        }
 
                         int current = upgradeComp.getUpgrades(upgrade);
                         int toAdd = Math.min(targetLevel - current, upgrade.getMax() - current);
@@ -254,7 +266,7 @@ public class MemoryCard extends net.minecraft.world.item.Item {
         }
 
         if (!isCreative && !consumedUpgrades.isEmpty()) {
-            consumeUpgradeCardsByType(player, consumedUpgrades);
+            consumeUpgradeCardsByType(itemSource, consumedUpgrades);
         }
 
         if (machinesAffected > 0) {
@@ -282,42 +294,44 @@ public class MemoryCard extends net.minecraft.world.item.Item {
         return count;
     }
 
-    private static boolean hasEnoughUpgrades(Player player, Map<Upgrade, Integer> required) {
-        Map<Upgrade, Integer> available = new EnumMap<>(Upgrade.class);
-        for (ItemStack itemStack : player.getInventory().items) {
-            if (itemStack.getItem() instanceof mekanism.common.item.interfaces.IUpgradeItem upgradeItem) {
-                Upgrade upgradeType = upgradeItem.getUpgradeType(itemStack);
-                available.put(upgradeType, available.getOrDefault(upgradeType, 0) + itemStack.getCount());
+    private static Map<Upgrade, Integer> getNeededUpgrades(Level level, List<BlockPos> connectedMachines, Map<Upgrade, Integer> perMachineUpgrade) {
+        Map<Upgrade, Integer> needed = new EnumMap<>(Upgrade.class);
+        for (BlockPos machinePos : connectedMachines) {
+            if (!(level.getBlockEntity(machinePos) instanceof TileEntityMekanism machine)) {
+                continue;
+            }
+            TileComponentUpgrade upgradeComp = machine.getComponent();
+            if (upgradeComp == null) {
+                continue;
+            }
+            for (Map.Entry<Upgrade, Integer> entry : perMachineUpgrade.entrySet()) {
+                Upgrade upgrade = entry.getKey();
+                if (!upgradeComp.supports(upgrade)) {
+                    continue;
+                }
+                int current = upgradeComp.getUpgrades(upgrade);
+                int targetLevel = entry.getValue();
+                int toAdd = Math.min(targetLevel - current, upgrade.getMax() - current);
+                if (toAdd > 0) {
+                    needed.merge(upgrade, toAdd, Integer::sum);
+                }
             }
         }
+        return needed;
+    }
+
+    private static boolean hasEnoughUpgrades(NetworkItemSource itemSource, Map<Upgrade, Integer> required) {
         for (Map.Entry<Upgrade, Integer> entry : required.entrySet()) {
-            if (available.getOrDefault(entry.getKey(), 0) < entry.getValue()) {
+            if (!itemSource.hasUpgrade(entry.getKey(), entry.getValue())) {
                 return false;
             }
         }
         return true;
     }
 
-    private static void consumeUpgradeCardsByType(Player player, Map<Upgrade, Integer> required) {
+    private static void consumeUpgradeCardsByType(NetworkItemSource itemSource, Map<Upgrade, Integer> required) {
         for (Map.Entry<Upgrade, Integer> entry : required.entrySet()) {
-            Upgrade neededType = entry.getKey();
-            int neededAmount = entry.getValue();
-            int remaining = neededAmount;
-
-            for (int i = 0; i < player.getInventory().getContainerSize() && remaining > 0; i++) {
-                ItemStack itemStack = player.getInventory().getItem(i);
-                if (itemStack.getItem() instanceof mekanism.common.item.interfaces.IUpgradeItem upgradeItem) {
-                    Upgrade cardType = upgradeItem.getUpgradeType(itemStack);
-                    if (cardType == neededType) {
-                        int take = Math.min(remaining, itemStack.getCount());
-                        itemStack.shrink(take);
-                        remaining -= take;
-                        if (itemStack.isEmpty()) {
-                            player.getInventory().setItem(i, ItemStack.EMPTY);
-                        }
-                    }
-                }
-            }
+            itemSource.consumeUpgrade(entry.getKey(), entry.getValue());
         }
     }
 
@@ -332,7 +346,7 @@ public class MemoryCard extends net.minecraft.world.item.Item {
         while (!queue.isEmpty()) {
             BlockPos current = queue.poll();
             if (level.getBlockEntity(current) instanceof TileEntityMekanism &&
-                level.getBlockState(current).getBlock() == targetBlock) {
+                    level.getBlockState(current).getBlock() == targetBlock) {
                 machines.add(current);
             }
 
@@ -340,7 +354,7 @@ public class MemoryCard extends net.minecraft.world.item.Item {
                 BlockPos neighbor = current.relative(dir);
                 if (!visited.contains(neighbor)) {
                     if (level.getBlockState(neighbor).getBlock() == targetBlock &&
-                        level.getBlockEntity(neighbor) instanceof TileEntityMekanism) {
+                            level.getBlockEntity(neighbor) instanceof TileEntityMekanism) {
                         visited.add(neighbor);
                         queue.add(neighbor);
                     }
@@ -362,5 +376,10 @@ public class MemoryCard extends net.minecraft.world.item.Item {
             case STONE_GENERATOR -> "石头生成升级";
             default -> upgrade.getSerializedName();
         };
+    }
+
+    @Override
+    public FrequencyType<?> getFrequencyType() {
+        return FrequencyType.QIO;
     }
 }

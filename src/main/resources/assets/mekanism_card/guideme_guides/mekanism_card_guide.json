@@ -1,0 +1,17 @@
+{
+  "default_language": "en_us",
+  "item_settings": {
+    "display_name": {
+      "type": "translatable",
+      "translate": "item.mekanism_card.guide_book"
+    },
+    "tooltip_lines": [
+      {
+        "type": "translatable",
+        "translate": "item.mekanism_card.guide_book.tooltip",
+        "color": "dark_gray"
+      }
+    ],
+    "model": "mekanism_card:item/guide_book"
+  }
+}

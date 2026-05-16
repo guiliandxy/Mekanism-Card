@@ -20,4 +20,9 @@ public class ModDataComponents {
             DATA_COMPONENT_TYPES.register("area_upgrade_mode", () -> DataComponentType.<Boolean>builder()
                     .persistent(Codec.BOOL)
                     .build());
+
+    public static final Supplier<DataComponentType<Integer>> FUSION_MODE =
+            DATA_COMPONENT_TYPES.register("fusion_mode", () -> DataComponentType.<Integer>builder()
+                    .persistent(Codec.INT)
+                    .build());
 }

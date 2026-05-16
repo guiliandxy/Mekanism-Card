@@ -89,9 +89,9 @@ Example mod description.
     side="BOTH"
 
 [[dependencies.${mod_id}]]
-    modId="patchouli"
-    type="optional"
-    versionRange="[1,)"
+    modId="guideme"
+    type="required"
+    versionRange="[21.1.15,)"
     ordering="AFTER"
     side="BOTH"
 

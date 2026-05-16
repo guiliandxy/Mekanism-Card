@@ -4,6 +4,7 @@ import com.mekanism.card.datagen.ModRecipeProvider;
 import com.mekanism.card.item.GuideBookItem;
 import com.mekanism.card.item.MassUpgradeConfigurator;
 import com.mekanism.card.item.MemoryCard;
+import com.mekanism.card.item.SuperFusionCard;
 import com.mekanism.card.item.UltimateTierInstaller;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.DataGenerator;
@@ -43,6 +44,9 @@ public class MekanismCard {
     public static final Supplier<Item> ULTIMATE_TIER_INSTALLER =
             ITEMS.register("ultimate_tier_installer", UltimateTierInstaller::new);
 
+    public static final Supplier<Item> SUPER_FUSION_CARD =
+            ITEMS.register("super_fusion_card", SuperFusionCard::new);
+
     public static final Supplier<CreativeModeTab> MEKANISM_CARD_TAB = CREATIVE_MODE_TABS.register("mekanism_card_tab",
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.mekanism_card"))
@@ -52,6 +56,7 @@ public class MekanismCard {
                         output.accept(MEMORY_CARD.get());
                         output.accept(GUIDE_BOOK.get());
                         output.accept(ULTIMATE_TIER_INSTALLER.get());
+                        output.accept(SUPER_FUSION_CARD.get());
                     })
                     .build());
 
@@ -72,7 +77,10 @@ public class MekanismCard {
     private void onRegister(RegisterEvent event) {
         event.register(Registries.ITEM, helper -> {
             net.neoforged.fml.ModList.get().getModContainerById("ae2").ifPresent(container -> {
+                com.mekanism.card.ae2.UltimateInstallerLinkableHandler.register(MASS_UPGRADE_CONFIGURATOR.get());
+                com.mekanism.card.ae2.UltimateInstallerLinkableHandler.register(MEMORY_CARD.get());
                 com.mekanism.card.ae2.UltimateInstallerLinkableHandler.register(ULTIMATE_TIER_INSTALLER.get());
+                com.mekanism.card.ae2.UltimateInstallerLinkableHandler.register(SUPER_FUSION_CARD.get());
             });
         });
     }

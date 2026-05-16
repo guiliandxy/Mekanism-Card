@@ -16,12 +16,12 @@ public class ModCapabilities {
         // Register Mekanism STRICT_ENERGY capability
         event.registerItem(Capabilities.STRICT_ENERGY.item(), (stack, ctx) -> {
             return new UltimateInstallerEnergyHandler(stack);
-        }, MekanismCard.ULTIMATE_TIER_INSTALLER.get());
+        }, MekanismCard.ULTIMATE_TIER_INSTALLER.get(), MekanismCard.SUPER_FUSION_CARD.get());
 
         // Also register NeoForge EnergyStorage for cross-mod compatibility
         event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM, (stack, ctx) -> {
             return new UltimateInstallerEnergyHandler(stack);
-        }, MekanismCard.ULTIMATE_TIER_INSTALLER.get());
+        }, MekanismCard.ULTIMATE_TIER_INSTALLER.get(), MekanismCard.SUPER_FUSION_CARD.get());
     }
 
     public static class UltimateInstallerEnergyHandler implements IStrictEnergyHandler, IEnergyStorage {

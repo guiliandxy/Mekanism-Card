@@ -76,6 +76,21 @@ public class QIOIntegration {
         }
     }
 
+    public static long consumeItemCountFromQIO(@Nullable IQIOFrequency freq, Item item, int amount) {
+        if (freq == null || amount <= 0) {
+            return 0;
+        }
+        try {
+            ItemStack sample = new ItemStack(item);
+            long extracted = freq.massExtract(sample, amount, Action.EXECUTE);
+            LOGGER.debug("Extracted {} from QIO for {}", extracted, item.getDescription().getString());
+            return extracted;
+        } catch (Exception e) {
+            LOGGER.error("Error consuming from QIO for {}", item, e);
+            return 0;
+        }
+    }
+
     public static long getItemCountInQIO(@Nullable IQIOFrequency freq, Item item) {
         if (freq == null) {
             return 0;

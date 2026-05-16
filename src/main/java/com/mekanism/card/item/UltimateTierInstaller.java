@@ -2,6 +2,7 @@ package com.mekanism.card.item;
 
 import com.mekanism.card.ModDataComponents;
 import com.mekanism.card.mekanism.QIOIntegration;
+import com.mekanism.card.util.NetworkItemSource;
 import mekanism.api.Action;
 import mekanism.api.energy.IStrictEnergyHandler;
 import mekanism.api.inventory.qio.IQIOFrequency;
@@ -41,7 +42,6 @@ import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Method;
 import java.util.*;
 
 public class UltimateTierInstaller extends Item implements mekanism.common.lib.frequency.IFrequencyItem {
@@ -130,11 +130,10 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
             return InteractionResult.FAIL;
         }
 
-        Object aeStorage = getBoundAENetwork(world, handStack);
-        IQIOFrequency qioFreq = QIOIntegration.getBoundQIONetwork(handStack);
+        NetworkItemSource itemSource = NetworkItemSource.create(world, player, handStack);
 
-        if (!isCreative && !hasRequiredInstallers(player, requiredInstallers, aeStorage, qioFreq)) {
-            showMissingInstallersMessage(player, requiredInstallers, aeStorage, qioFreq);
+        if (!isCreative && !hasRequiredInstallers(requiredInstallers, itemSource)) {
+            showMissingInstallersMessage(player, requiredInstallers, itemSource);
             return InteractionResult.FAIL;
         }
 
@@ -142,7 +141,7 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
 
         if (steps > 0) {
             if (!isCreative) {
-                consumeInstallers(player, requiredInstallers, aeStorage, qioFreq);
+                consumeInstallers(itemSource, requiredInstallers);
                 if (energyHandler != null) {
                     energyHandler.extractEnergy(0, ENERGY_PER_UPGRADE, Action.EXECUTE);
                 }
@@ -241,8 +240,7 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
             return InteractionResult.FAIL;
         }
 
-        Object aeStorage = getBoundAENetwork(world, handStack);
-        IQIOFrequency qioFreq = QIOIntegration.getBoundQIONetwork(handStack);
+        NetworkItemSource itemSource = NetworkItemSource.create(world, player, handStack);
 
         Map<Item, Integer> totalInstallers = new HashMap<>();
         for (UpgradeTarget target : targets) {
@@ -252,7 +250,7 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
             }
         }
 
-        if (!isCreative && !hasRequiredInstallersBulk(player, totalInstallers, aeStorage, qioFreq)) {
+        if (!isCreative && !hasRequiredInstallersBulk(totalInstallers, itemSource)) {
             player.displayClientMessage(Component.translatable("message.mekanism_card.ultimate_installer.missing_installers_area")
                     .withStyle(ChatFormatting.RED), true);
             return InteractionResult.FAIL;
@@ -273,7 +271,7 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
             if (!isCreative) {
                 for (UpgradeTarget target : targets) {
                     List<Item> installers = getRequiredInstallers(target.currentTier);
-                    consumeInstallers(player, installers, aeStorage, qioFreq);
+                    consumeInstallers(itemSource, installers);
                 }
                 if (energyHandler != null) {
                     energyHandler.extractEnergy(0, (long) upgradedCount * ENERGY_PER_UPGRADE, Action.EXECUTE);
@@ -285,20 +283,6 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
         }
 
         return InteractionResult.FAIL;
-    }
-
-    @Nullable
-    private Object getBoundAENetwork(Level world, ItemStack stack) {
-        if (!net.neoforged.fml.ModList.get().isLoaded("ae2")) {
-            return null;
-        }
-        try {
-            Class<?> clazz = Class.forName("com.mekanism.card.ae2.AE2Integration");
-            Method method = clazz.getDeclaredMethod("getBoundAENetwork", Level.class, ItemStack.class);
-            return method.invoke(null, world, stack);
-        } catch (Exception e) {
-            return null;
-        }
     }
 
     private List<Item> getRequiredInstallers(@Nullable BaseTier currentTier) {
@@ -343,84 +327,23 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
         };
     }
 
-    private boolean hasRequiredInstallers(Player player, List<Item> requiredInstallers,
-                                          @Nullable Object aeStorage, @Nullable IQIOFrequency qioFreq) {
+    private boolean hasRequiredInstallers(List<Item> requiredInstallers, NetworkItemSource itemSource) {
         for (Item installer : requiredInstallers) {
-            if (!hasInstaller(player, installer, aeStorage, qioFreq)) {
+            if (!itemSource.has(installer, 1)) {
                 return false;
             }
         }
         return true;
     }
 
-    private boolean hasRequiredInstallersBulk(Player player, Map<Item, Integer> totalInstallers,
-                                              @Nullable Object aeStorage, @Nullable IQIOFrequency qioFreq) {
-        for (Map.Entry<Item, Integer> entry : totalInstallers.entrySet()) {
-            Item installer = entry.getKey();
-            int needed = entry.getValue();
-            int available = 0;
-
-            for (ItemStack stack : player.getInventory().items) {
-                if (stack.getItem() == installer) {
-                    available += stack.getCount();
-                }
-            }
-
-            if (available >= needed) {
-                continue;
-            }
-
-            int remaining = needed - available;
-            if (aeStorage != null && hasInstallerCountInAE2(aeStorage, installer, remaining)) {
-                continue;
-            }
-
-            if (qioFreq != null && QIOIntegration.getItemCountInQIO(qioFreq, installer) >= remaining) {
-                continue;
-            }
-
-            return false;
-        }
-        return true;
+    private boolean hasRequiredInstallersBulk(Map<Item, Integer> totalInstallers, NetworkItemSource itemSource) {
+        return itemSource.hasAll(totalInstallers);
     }
 
-    private boolean hasInstaller(Player player, Item installer, @Nullable Object aeStorage, @Nullable IQIOFrequency qioFreq) {
-        for (ItemStack stack : player.getInventory().items) {
-            if (stack.getItem() == installer) {
-                return true;
-            }
-        }
-        if (aeStorage != null && hasInstallerInAE2(aeStorage, installer)) {
-            return true;
-        }
-        return QIOIntegration.hasItemInQIO(qioFreq, installer);
-    }
-
-    private boolean hasInstallerInAE2(Object aeStorage, Item installer) {
-        try {
-            Class<?> clazz = Class.forName("com.mekanism.card.ae2.AE2Integration");
-            Method method = clazz.getDeclaredMethod("hasInstallerInAE2", Object.class, Item.class);
-            return (Boolean) method.invoke(null, aeStorage, installer);
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private boolean hasInstallerCountInAE2(Object aeStorage, Item installer, int needed) {
-        try {
-            Class<?> clazz = Class.forName("com.mekanism.card.ae2.AE2Integration");
-            Method method = clazz.getDeclaredMethod("hasInstallerCountInAE2", Object.class, Item.class, int.class);
-            return (Boolean) method.invoke(null, aeStorage, installer, needed);
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private void showMissingInstallersMessage(Player player, List<Item> requiredInstallers,
-                                              @Nullable Object aeStorage, @Nullable IQIOFrequency qioFreq) {
+    private void showMissingInstallersMessage(Player player, List<Item> requiredInstallers, NetworkItemSource itemSource) {
         Item missing = null;
         for (Item installer : requiredInstallers) {
-            if (!hasInstaller(player, installer, aeStorage, qioFreq)) {
+            if (!itemSource.has(installer, 1)) {
                 missing = installer;
                 break;
             }
@@ -429,49 +352,15 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
             player.displayClientMessage(Component.translatable("message.mekanism_card.ultimate_installer.missing_installer",
                             missing.getDescription())
                     .withStyle(ChatFormatting.RED), true);
-        } else if (aeStorage == null && qioFreq == null) {
+        } else if (!itemSource.hasExternalStorage()) {
             player.displayClientMessage(Component.translatable("message.mekanism_card.ultimate_installer.no_network")
                     .withStyle(ChatFormatting.YELLOW), true);
         }
     }
 
-    private void consumeInstallers(Player player, List<Item> requiredInstallers,
-                                   @Nullable Object aeStorage, @Nullable IQIOFrequency qioFreq) {
+    private void consumeInstallers(NetworkItemSource itemSource, List<Item> requiredInstallers) {
         for (Item installer : requiredInstallers) {
-            int remaining = 1;
-
-            for (int i = 0; i < player.getInventory().getContainerSize() && remaining > 0; i++) {
-                ItemStack stack = player.getInventory().getItem(i);
-                if (stack.getItem() == installer) {
-                    int take = Math.min(remaining, stack.getCount());
-                    stack.shrink(take);
-                    remaining -= take;
-                    if (stack.isEmpty()) {
-                        player.getInventory().setItem(i, ItemStack.EMPTY);
-                    }
-                }
-            }
-
-            if (remaining > 0 && aeStorage != null) {
-                if (consumeInstallerFromAE2(aeStorage, installer)) {
-                    remaining--;
-                }
-            }
-
-            if (remaining > 0 && qioFreq != null) {
-                QIOIntegration.consumeItemFromQIO(qioFreq, installer);
-            }
-        }
-    }
-
-    private boolean consumeInstallerFromAE2(Object aeStorage, Item installer) {
-        try {
-            Class<?> clazz = Class.forName("com.mekanism.card.ae2.AE2Integration");
-            Method method = clazz.getDeclaredMethod("consumeInstallersFromAE2", Object.class, List.class);
-            method.invoke(null, aeStorage, List.of(installer));
-            return true;
-        } catch (Exception e) {
-            return false;
+            itemSource.consume(installer, 1);
         }
     }
 
@@ -556,6 +445,23 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
     @Override
     @OnlyIn(Dist.CLIENT)
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        if (TooltipHelper.isDescriptionKeyDown()) {
+            tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.description")
+                    .withStyle(ChatFormatting.GRAY));
+            tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.usage")
+                    .withStyle(ChatFormatting.DARK_GREEN));
+            tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.ae2_support")
+                    .withStyle(ChatFormatting.AQUA));
+            tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.qio_support")
+                    .withStyle(ChatFormatting.LIGHT_PURPLE));
+            tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.consumes")
+                    .withStyle(ChatFormatting.RED));
+            tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.qio_bind_hint")
+                    .withStyle(ChatFormatting.DARK_GRAY));
+            super.appendHoverText(stack, context, tooltip, flag);
+            return;
+        }
+
         IStrictEnergyHandler energyHandler = Capabilities.STRICT_ENERGY.getCapability(stack);
         if (energyHandler != null) {
             StorageUtils.addStoredEnergy(stack, tooltip, false);
@@ -567,19 +473,6 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
                                 ? Component.translatable("tooltip.mekanism_card.ultimate_installer.mode_area")
                                 : Component.translatable("tooltip.mekanism_card.ultimate_installer.mode_single"))
                 .withStyle(ChatFormatting.GOLD));
-
-        tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.description")
-                .withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.usage")
-                .withStyle(ChatFormatting.DARK_GREEN));
-        tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.ae2_support")
-                .withStyle(ChatFormatting.AQUA));
-        tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.qio_support")
-                .withStyle(ChatFormatting.LIGHT_PURPLE));
-        tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.consumes")
-                .withStyle(ChatFormatting.RED));
-        tooltip.add(Component.translatable("tooltip.mekanism_card.ultimate_installer.qio_bind_hint")
-                .withStyle(ChatFormatting.DARK_GRAY));
 
         if (net.neoforged.fml.ModList.get().isLoaded("ae2")) {
             try {
@@ -619,6 +512,8 @@ public class UltimateTierInstaller extends Item implements mekanism.common.lib.f
         } catch (Exception e) {
             // ignore
         }
+
+        TooltipHelper.addHoldForDescription(tooltip);
 
         super.appendHoverText(stack, context, tooltip, flag);
     }

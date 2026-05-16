@@ -3,25 +3,16 @@
   "category": "equipment",
   "key": {
     "A": {
-      "item": "mekanism:hdpe_sheet"
+      "item": "minecraft:diamond"
     },
     "B": {
-      "item": "mekanism:pellet_polonium"
-    },
-    "C": {
-      "item": "mekanism:ultimate_control_circuit"
-    },
-    "D": {
       "item": "mekanism:configuration_card"
-    },
-    "E": {
-      "item": "mekanism:qio_drive_base"
     }
   },
   "pattern": [
+    "AAA",
     "ABA",
-    "CDC",
-    "BEB"
+    "AAA"
   ],
   "result": {
     "count": 1,

@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "A": {
+      "item": "mekanism:ingot_steel"
+    },
+    "B": {
+      "item": "mekanism_card:mass_upgrade_configurator"
+    },
+    "C": {
+      "item": "mekanism_card:memory_card"
+    },
+    "D": {
+      "item": "mekanism:basic_energy_cube"
+    },
+    "E": {
+      "item": "mekanism:configuration_card"
+    },
+    "F": {
+      "item": "mekanism:ingot_osmium"
+    }
+  },
+  "pattern": [
+    "ABA",
+    "CDE",
+    "AFA"
+  ],
+  "result": {
+    "count": 1,
+    "id": "mekanism_card:super_fusion_card"
+  }
+}
